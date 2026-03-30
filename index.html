@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#08080e" />
+  <title>Agenda Pro — Agendamento Online</title>
+  <meta name="description" content="Agende seus serviços favoritos em segundos. Sem filas, sem espera." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── HERO ── */
+    .hero {
+      padding: 48px 20px 40px;
+      text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 10vw, 56px);
+      font-weight: 800; line-height: 1.1;
+      background: linear-gradient(155deg, #ffffff 35%, #a78bfa);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p { color: var(--text2); font-size: 16px; line-height: 1.7; max-width: 340px; }
+    .hero-btns { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 340px; margin-top: 8px; }
+
+    /* ── STATS ── */
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      padding: 0 20px 36px;
+    }
+    .stat-box {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px 16px; text-align: center;
+    }
+    .stat-num {
+      font-size: 28px; font-weight: 800;
+      background: linear-gradient(135deg, #fff, #a78bfa);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-lbl { font-size: 12px; color: var(--text2); margin-top: 4px; line-height: 1.4; }
+
+    /* ── SECTION ── */
+    .sec { padding: 32px 20px; position: relative; z-index: 1; }
+    .sec-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 6vw, 32px); font-weight: 800; margin-bottom: 6px;
+      background: linear-gradient(145deg, #fff 40%, #a78bfa);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .sec-sub { color: var(--text2); font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+
+    /* ── SERVICE CARDS (horizontal scroll) ── */
+    .svc-scroll {
+      display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;
+      -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+    .svc-scroll::-webkit-scrollbar { display: none; }
+    .svc-card {
+      flex-shrink: 0; width: 180px; scroll-snap-align: start;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 20px 16px;
+      text-decoration: none; color: inherit;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color var(--transition), transform var(--transition);
+    }
+    .svc-card:active { transform: scale(0.97); border-color: var(--accent2); }
+    .svc-icon  { font-size: 30px; margin-bottom: 10px; }
+    .svc-name  { font-size: 14px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+    .svc-dur   { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .svc-price { font-size: 18px; font-weight: 800; color: var(--accent2); }
+
+    /* ── HOW IT WORKS ── */
+    .how-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 24px 20px;
+    }
+    .steps-list { display: flex; flex-direction: column; gap: 0; margin-top: 20px; }
+    .step-row {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 16px 0; border-bottom: 1px solid var(--border);
+    }
+    .step-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(124,110,247,0.2), rgba(167,139,250,0.1));
+      border: 1.5px solid rgba(124,110,247,0.35);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 800; color: var(--accent2);
+    }
+    .step-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .step-desc  { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+    /* ── TESTIMONIALS ── */
+    .testi-scroll {
+      display: flex; gap: 12px; overflow-x: auto;
+      -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;
+      scrollbar-width: none; padding-bottom: 8px;
+    }
+    .testi-scroll::-webkit-scrollbar { display: none; }
+    .testi-card {
+      flex-shrink: 0; width: 280px; scroll-snap-align: start;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .testi-stars { color: #f59e0b; font-size: 13px; margin-bottom: 10px; }
+    .testi-text  { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 14px; font-style: italic; }
+    .testi-author { display: flex; align-items: center; gap: 10px; }
+    .testi-avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #7c6ef7, #a78bfa);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: #fff;
+    }
+    .testi-name { font-size: 14px; font-weight: 700; }
+    .testi-role { font-size: 12px; color: var(--muted); }
+
+    /* ── CTA BLOCK ── */
+    .cta-block {
+      background: linear-gradient(135deg, rgba(124,110,247,0.14), rgba(167,139,250,0.06));
+      border: 1px solid rgba(124,110,247,0.28); border-radius: var(--radius-lg);
+      padding: 32px 20px; text-align: center; margin: 0 20px 32px;
+    }
+    .cta-block h2 {
+      font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800;
+      margin-bottom: 8px;
+      background: linear-gradient(145deg, #fff 40%, #a78bfa);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .cta-block p { color: var(--text2); font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+
+    /* ── SEE ALL LINK ── */
+    .see-all {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--accent2); font-size: 14px; font-weight: 600;
+      text-decoration: none; -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── DESKTOP ADJUSTMENTS ── */
+    @media (min-width: 768px) {
+      .hero { padding: 72px 48px 56px; }
+      .hero p { max-width: 500px; font-size: 18px; }
+      .hero-btns { flex-direction: row; max-width: none; justify-content: center; }
+      .stats-grid { grid-template-columns: repeat(4, 1fr); max-width: 900px; margin: 0 auto; padding: 0 48px 48px; }
+      .sec { padding: 48px 48px; max-width: 1100px; margin: 0 auto; }
+      .svc-scroll { flex-wrap: wrap; overflow: visible; }
+      .svc-card { width: calc(33.33% - 12px); }
+      .testi-scroll { flex-wrap: wrap; overflow: visible; }
+      .testi-card { width: calc(33.33% - 12px); }
+      .cta-block { margin: 0 48px 48px; padding: 52px 40px; }
+      .cta-block h2 { font-size: 34px; }
+      .how-card { padding: 36px 32px; }
+      .steps-list { display: grid; grid-template-columns: 1fr 1fr; }
+      .step-row { border-bottom: none; border-right: 1px solid var(--border); padding: 16px 20px; }
+      .step-row:nth-child(even) { border-right: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <a href="index.html" class="topbar-logo">Agenda Pro</a>
+    <nav class="topbar-nav-links">
+      <a href="index.html" class="active">Início</a>
+      <a href="pages/servicos.html">Serviços</a>
+      <a href="pages/agendar.html">Agendar</a>
+      <a href="pages/contato.html">Contato</a>
+    </nav>
+    <a href="pages/agendar.html" class="topbar-action">Agendar →</a>
+  </header>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bn-item active">
+      <span class="bn-icon">🏠</span>
+      <span>Início</span>
+    </a>
+    <a href="pages/servicos.html" class="bn-item">
+      <span class="bn-icon">✨</span>
+      <span>Serviços</span>
+    </a>
+    <a href="pages/agendar.html" class="bn-item center-btn">
+      <div class="bn-icon-wrap">📅</div>
+      <span>Agendar</span>
+    </a>
+    <a href="pages/contato.html" class="bn-item">
+      <span class="bn-icon">💬</span>
+      <span>Contato</span>
+    </a>
+  </nav>
+
+  <div class="page-wrap">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="badge"><div class="badge-dot"></div>Online 24/7 • Confirme agora</div>
+      <h1>Seu tempo<br/>merece o melhor</h1>
+      <p>Reserve serviços em segundos. Sem ligar, sem esperar. Receba confirmação no WhatsApp.</p>
+      <div class="hero-btns">
+        <a href="pages/agendar.html" class="btn btn-primary btn-full">📅 Fazer Agendamento</a>
+        <a href="pages/servicos.html" class="btn btn-outline btn-full">Ver todos os serviços</a>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-num">12k+</div><div class="stat-lbl">Agendamentos realizados</div></div>
+      <div class="stat-box"><div class="stat-num">98%</div><div class="stat-lbl">Satisfação dos clientes</div></div>
+      <div class="stat-box"><div class="stat-num">4.9★</div><div class="stat-lbl">Avaliação média</div></div>
+      <div class="stat-box"><div class="stat-num">60s</div><div class="stat-lbl">Tempo de agendamento</div></div>
+    </div>
+
+    <!-- SERVICES -->
+    <section class="sec">
+      <div class="section-label">Serviços</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <h2 class="sec-title" style="margin-bottom:0">Em destaque</h2>
+        <a href="pages/servicos.html" class="see-all">Ver todos →</a>
+      </div>
+      <p class="sec-sub">Deslize para ver mais</p>
+      <div class="svc-scroll" id="svcScroll"></div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="sec" style="padding-top:0">
+      <div class="section-label">Como funciona</div>
+      <h2 class="sec-title">4 passos simples</h2>
+      <div class="how-card">
+        <div class="steps-list">
+          <div class="step-row">
+            <div class="step-num">1</div>
+            <div><div class="step-title">Escolha o serviço</div><div class="step-desc">Navegue pelo catálogo e toque no que deseja.</div></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">2</div>
+            <div><div class="step-title">Selecione data e hora</div><div class="step-desc">Veja os horários disponíveis e reserve o seu.</div></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">3</div>
+            <div><div class="step-title">Informe seus dados</div><div class="step-desc">Nome, telefone e e-mail. Rápido e seguro.</div></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">4</div>
+            <div><div class="step-title">Pronto! Confirmado</div><div class="step-desc">Receba a confirmação no WhatsApp na hora.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="sec" style="padding-top:0">
+      <div class="section-label">Depoimentos</div>
+      <h2 class="sec-title">O que dizem sobre nós</h2>
+      <p class="sec-sub">Deslize para ver mais</p>
+      <div class="testi-scroll">
+        <div class="testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <div class="testi-text">"Agendei em menos de um minuto e recebi o lembrete pelo WhatsApp. Incrível!"</div>
+          <div class="testi-author"><div class="testi-avatar">A</div><div><div class="testi-name">Ana Beatriz</div><div class="testi-role">Cliente desde 2023</div></div></div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <div class="testi-text">"Nunca foi tão fácil marcar. O sistema é lindo, rápido e funciona perfeitamente no celular!"</div>
+          <div class="testi-author"><div class="testi-avatar">C</div><div><div class="testi-name">Carlos Eduardo</div><div class="testi-role">Cliente desde 2024</div></div></div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <div class="testi-text">"Consigo agendar qualquer hora, mesmo de madrugada. Que comodidade!"</div>
+          <div class="testi-author"><div class="testi-avatar">M</div><div><div class="testi-name">Mariana Silva</div><div class="testi-role">Cliente desde 2022</div></div></div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <div class="testi-text">"Reagendei sem precisar ligar para ninguém. Super prático no celular!"</div>
+          <div class="testi-author"><div class="testi-avatar">R</div><div><div class="testi-name">Roberto Alves</div><div class="testi-role">Cliente desde 2024</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="cta-block">
+      <h2>Pronto para se cuidar?</h2>
+      <p>Agende agora e ganhe <strong style="color:var(--accent2)">10% de desconto</strong> na primeira consulta!</p>
+      <a href="pages/agendar.html" class="btn btn-primary btn-full">Agendar com Desconto</a>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-logo">Agenda Pro</div>
+      <div class="footer-links-row">
+        <a href="index.html">Início</a>
+        <a href="pages/servicos.html">Serviços</a>
+        <a href="pages/agendar.html">Agendar</a>
+        <a href="pages/contato.html">Contato</a>
+      </div>
+      <div class="footer-copy">© 2026 Agenda Pro · Feito com ♥</div>
+    </footer>
+
+  </div><!-- /.page-wrap -->
+
+  <script src="js/data.js"></script>
+  <script>
+    const scroll = document.getElementById('svcScroll');
+    scroll.innerHTML = AP.services.slice(0, 6).map(s => `
+      <a href="pages/agendar.html?service=${s.id}" class="svc-card">
+        <div class="svc-icon">${s.icon}</div>
+        <div class="svc-name">${s.name}</div>
+        <div class="svc-dur">⏱ ${s.dur}</div>
+        <div class="svc-price">${AP.formatPrice(s.price)}</div>
+      </a>
+    `).join('');
+  </script>
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#08080e" />
+  <title>Agendar — Agenda Pro</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    /* ── PROGRESS BAR ── */
+    .progress-wrap {
+      padding: 20px 20px 0;
+      display: flex; align-items: center; gap: 0;
+    }
+    .p-step {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      position: relative;
+    }
+    .p-step::after {
+      content: ''; position: absolute; top: 17px; left: 50%; width: 100%; height: 2px;
+      background: var(--border); z-index: 0; transition: background 0.4s;
+    }
+    .p-step:last-child::after { display: none; }
+    .p-step.done::after  { background: var(--accent); }
+    .p-dot {
+      width: 34px; height: 34px; border-radius: 50%; z-index: 1;
+      background: var(--surface2); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: var(--muted);
+      transition: all 0.3s; position: relative;
+    }
+    .p-step.active .p-dot { border-color: var(--accent); color: var(--accent2); background: rgba(124,110,247,0.12); box-shadow: 0 0 0 4px var(--accent-glow); }
+    .p-step.done   .p-dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .p-lbl { font-size: 10px; font-weight: 600; color: var(--muted); transition: color 0.3s; }
+    .p-step.active .p-lbl { color: var(--accent2); }
+    .p-step.done   .p-lbl { color: var(--text2); }
+
+    /* ── STEP CARD ── */
+    .step-card {
+      margin: 16px 20px 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .step-body { padding: 24px 20px; min-height: 340px; }
+    .step-heading { font-size: 19px; font-weight: 800; margin-bottom: 4px; }
+    .step-sub { color: var(--text2); font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+
+    .step-panel { display: none; animation: fadeUp 0.3s ease; }
+    .step-panel.active { display: block; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    .step-footer {
+      padding: 16px 20px; background: var(--surface2);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .step-ind { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+    #btnBack { min-height: 44px; padding: 10px 16px; font-size: 14px; }
+    #btnNext { min-height: 44px; flex: 1; max-width: 200px; }
+
+    /* ── STEP 1: SERVICE PICK ── */
+    .pick-list { display: flex; flex-direction: column; gap: 10px; }
+    .pick-item {
+      background: var(--surface2); border: 2px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      display: flex; align-items: center; gap: 14px; cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    }
+    .pick-item:active { transform: scale(0.985); }
+    .pick-item.selected { border-color: var(--accent); background: rgba(124,110,247,0.07); }
+    .pick-icon  { font-size: 28px; flex-shrink: 0; }
+    .pick-info  { flex: 1; min-width: 0; }
+    .pick-name  { font-size: 15px; font-weight: 700; }
+    .pick-dur   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .pick-right { text-align: right; flex-shrink: 0; }
+    .pick-price { font-size: 17px; font-weight: 800; color: var(--accent2); }
+    .pick-check {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); border: none;
+      display: none; align-items: center; justify-content: center;
+      font-size: 12px; color: #fff; margin-top: 4px; margin-left: auto;
+    }
+    .pick-item.selected .pick-check { display: flex; }
+
+    /* ── STEP 2: CALENDAR ── */
+    .cal-nav-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .cal-month   { font-size: 16px; font-weight: 700; }
+    .cal-arrow   {
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .cal-grid    { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+    .cal-dh      { text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); padding: 6px 0; }
+    .cal-cell    {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+      border: 2px solid transparent; transition: all var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cal-cell:active:not(.disabled):not(.empty) { transform: scale(0.9); }
+    .cal-cell.today    { color: var(--accent2); font-weight: 800; }
+    .cal-cell.selected { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 12px var(--accent-glow); }
+    .cal-cell.disabled { color: var(--muted); opacity: 0.3; cursor: not-allowed; }
+    .cal-cell.empty    { cursor: default; }
+
+    /* slots */
+    .slots-section { margin-top: 20px; }
+    .slots-placeholder { color: var(--muted); font-size: 14px; padding: 12px 0; text-align: center; }
+    .slots-group-lbl {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted); margin: 14px 0 8px; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .slots-group-lbl:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+    .slots-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .slot {
+      background: var(--surface2); border: 2px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 14px;
+      font-size: 14px; font-weight: 700; cursor: pointer; color: var(--text);
+      transition: all var(--transition); min-height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .slot:active { transform: scale(0.93); }
+    .slot.selected   { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 2px 12px var(--accent-glow); }
+    .slot.unavailable{ opacity: 0.2; cursor: not-allowed; pointer-events: none; text-decoration: line-through; }
+
+    /* ── STEP 3: FORM ── */
+    .form-stack { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── STEP 4: CONFIRM ── */
+    .confirm-block { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 12px; }
+    .confirm-block-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 12px; }
+    .confirm-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+    .confirm-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .confirm-key { color: var(--text2); font-size: 13px; flex-shrink: 0; }
+    .confirm-val { font-size: 14px; font-weight: 700; text-align: right; }
+    .confirm-price { font-size: 20px; font-weight: 800; color: var(--accent2); }
+    .terms-row { display: flex; align-items: flex-start; gap: 12px; margin-top: 12px; cursor: pointer; }
+    .terms-row input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+    .terms-row span  { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .terms-row a { color: var(--accent2); }
+
+    /* ── STEP 5: SUCCESS ── */
+    .success-view {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; gap: 16px; padding: 16px 0 8px;
+    }
+    .success-check {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; color: #fff;
+      box-shadow: 0 0 0 14px rgba(34,197,94,0.1), 0 0 40px rgba(34,197,94,0.3);
+      animation: popIn 0.5s cubic-bezier(.175,.885,.32,1.275);
+    }
+    @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+    .success-view h2 { font-family:'Playfair Display',serif; font-size:26px; font-weight:800; }
+    .success-view p  { color: var(--text2); font-size: 14px; line-height: 1.6; max-width: 300px; }
+    .success-ref {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px 24px; font-size: 18px; font-weight: 800; letter-spacing: 0.1em; color: var(--accent2);
+    }
+    .success-detail-card {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; font-size: 14px; color: var(--text2);
+      display: flex; flex-direction: column; gap: 8px; width: 100%; text-align: left;
+    }
+    .success-detail-card span { display: flex; gap: 8px; align-items: center; }
+    .success-detail-card strong { color: var(--text); }
+    .success-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+
+    /* ── DESKTOP ── */
+    @media (min-width: 768px) {
+      .progress-wrap { padding: 28px 48px 0; max-width: 700px; margin: 0 auto; }
+      .step-card { margin: 20px 48px 0; max-width: 700px; margin-left: auto; margin-right: auto; }
+      .step-body { padding: 36px 36px; }
+      .step-footer { padding: 20px 36px; }
+      .pick-list { display: grid; grid-template-columns: 1fr 1fr; }
+      .cal-grid  { gap: 6px; }
+      .cal-cell  { font-size: 14px; }
+      .success-btns { flex-direction: row; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <a href="../index.html" class="topbar-logo">Agenda Pro</a>
+    <nav class="topbar-nav-links">
+      <a href="../index.html">Início</a>
+      <a href="servicos.html">Serviços</a>
+      <a href="agendar.html" class="active">Agendar</a>
+      <a href="contato.html">Contato</a>
+    </nav>
+    <a href="agendar.html" class="topbar-action">Agendar →</a>
+  </header>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <a href="../index.html" class="bn-item"><span class="bn-icon">🏠</span><span>Início</span></a>
+    <a href="servicos.html" class="bn-item"><span class="bn-icon">✨</span><span>Serviços</span></a>
+    <a href="agendar.html" class="bn-item center-btn active">
+      <div class="bn-icon-wrap">📅</div><span>Agendar</span>
+    </a>
+    <a href="contato.html" class="bn-item"><span class="bn-icon">💬</span><span>Contato</span></a>
+  </nav>
+
+  <div class="page-wrap">
+    <!-- PAGE TITLE -->
+    <div style="padding:28px 20px 0;text-align:center">
+      <div class="badge" style="margin-bottom:10px"><div class="badge-dot"></div>Agendamento seguro</div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:clamp(24px,7vw,38px);font-weight:800;background:linear-gradient(145deg,#fff 40%,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px">Faça seu Agendamento</h1>
+      <p style="color:var(--text2);font-size:14px">Siga os passos abaixo e confirme em segundos</p>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-step p-step active" id="ps1"><div class="p-dot" id="pd1">1</div><span class="p-lbl">Serviço</span></div>
+      <div class="progress-step p-step"        id="ps2"><div class="p-dot" id="pd2">2</div><span class="p-lbl">Data</span></div>
+      <div class="progress-step p-step"        id="ps3"><div class="p-dot" id="pd3">3</div><span class="p-lbl">Dados</span></div>
+      <div class="progress-step p-step"        id="ps4"><div class="p-dot" id="pd4">4</div><span class="p-lbl">Confirmar</span></div>
+    </div>
+
+    <!-- WIZARD CARD -->
+    <div class="step-card">
+      <div class="step-body">
+
+        <!-- STEP 1 -->
+        <div class="step-panel active" id="sp1">
+          <div class="step-heading">Qual serviço deseja?</div>
+          <div class="step-sub">Toque no serviço para selecioná-lo</div>
+          <div class="pick-list" id="pickList"></div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step-panel" id="sp2">
+          <div class="step-heading">Data e horário</div>
+          <div class="step-sub">Escolha um dia disponível e o horário ideal</div>
+          <div class="cal-nav-row">
+            <button class="cal-arrow" id="calPrev">‹</button>
+            <span class="cal-month" id="calMonth"></span>
+            <button class="cal-arrow" id="calNext">›</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="slots-section" id="slotsSection">
+            <div class="slots-placeholder">Selecione uma data acima 👆</div>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step-panel" id="sp3">
+          <div class="step-heading">Seus dados</div>
+          <div class="step-sub">Preencha para confirmar o agendamento</div>
+          <div class="form-stack">
+            <div class="form-group">
+              <label class="form-label">Nome completo *</label>
+              <input class="form-control" type="text" id="inp-name" placeholder="João da Silva" autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">WhatsApp / Telefone *</label>
+              <input class="form-control" type="tel" id="inp-phone" placeholder="(11) 99999-9999" autocomplete="tel" inputmode="tel" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">E-mail *</label>
+              <input class="form-control" type="email" id="inp-email" placeholder="voce@email.com" autocomplete="email" inputmode="email" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Como nos conheceu?</label>
+              <select class="form-control" id="inp-how">
+                <option value="">Selecione...</option>
+                <option>Instagram</option>
+                <option>Google</option>
+                <option>Indicação de amigo(a)</option>
+                <option>TikTok</option>
+                <option>Passando pela rua</option>
+                <option>Outro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Observações (opcional)</label>
+              <textarea class="form-control" id="inp-notes" placeholder="Alergias, preferências ou informações adicionais..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step-panel" id="sp4">
+          <div class="step-heading">Confirme</div>
+          <div class="step-sub">Revise os dados antes de finalizar</div>
+          <div class="confirm-block">
+            <div class="confirm-block-title">Serviço</div>
+            <div class="confirm-row"><span class="confirm-key">Serviço</span><span class="confirm-val" id="c-svc">—</span></div>
+            <div class="confirm-row"><span class="confirm-key">Data</span><span class="confirm-val" id="c-date">—</span></div>
+            <div class="confirm-row"><span class="confirm-key">Horário</span><span class="confirm-val" id="c-time">—</span></div>
+            <div class="confirm-row"><span class="confirm-key">Duração</span><span class="confirm-val" id="c-dur">—</span></div>
+            <div class="confirm-row"><span class="confirm-key">Total</span><span class="confirm-val confirm-price" id="c-price">—</span></div>
+          </div>
+          <div class="confirm-block">
+            <div class="confirm-block-title">Seus Dados</div>
+            <div class="confirm-row"><span class="confirm-key">Nome</span><span class="confirm-val" id="c-name">—</span></div>
+            <div class="confirm-row"><span class="confirm-key">Telefone</span><span class="confirm-val" id="c-phone">—</span></div>
+            <div class="confirm-row"><span class="confirm-key">E-mail</span><span class="confirm-val" id="c-email">—</span></div>
+          </div>
+          <label class="terms-row">
+            <input type="checkbox" id="terms" />
+            <span>Li e concordo com os <a href="#">Termos de Uso</a> e autorizo lembretes por WhatsApp.</span>
+          </label>
+        </div>
+
+        <!-- STEP 5 SUCCESS -->
+        <div class="step-panel" id="sp5">
+          <div class="success-view">
+            <div class="success-check">✓</div>
+            <h2>Confirmado!</h2>
+            <p>Você receberá a confirmação por WhatsApp e e-mail em instantes.</p>
+            <div class="success-ref" id="successRef">AGD-000000</div>
+            <div class="success-detail-card" id="successDetails"></div>
+            <div class="success-btns">
+              <button class="btn btn-primary" onclick="resetWizard()">Novo Agendamento</button>
+              <a href="../index.html" class="btn btn-ghost">Voltar ao Início</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.step-body -->
+
+      <!-- FOOTER -->
+      <div class="step-footer" id="stepFooter">
+        <button class="btn btn-ghost" id="btnBack" onclick="prevStep()">← Voltar</button>
+        <span class="step-ind" id="stepInd">1 / 4</span>
+        <button class="btn btn-primary" id="btnNext" onclick="nextStep()">Continuar →</button>
+      </div>
+    </div><!-- /.step-card -->
+
+    <!-- FOOTER -->
+    <footer class="footer" style="margin-top:32px">
+      <div class="footer-logo">Agenda Pro</div>
+      <div class="footer-links-row">
+        <a href="../index.html">Início</a>
+        <a href="servicos.html">Serviços</a>
+        <a href="agendar.html">Agendar</a>
+        <a href="contato.html">Contato</a>
+      </div>
+      <div class="footer-copy">© 2026 Agenda Pro · Feito com ♥</div>
+    </footer>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script>
+    let state = { step:1, service:null, date:null, time:null };
+    let calY, calM;
+
+    function init() {
+      const now = new Date(); calY = now.getFullYear(); calM = now.getMonth();
+      // URL param
+      const sid = parseInt(new URLSearchParams(location.search).get('service'));
+      if (sid) state.service = AP.services.find(s => s.id === sid);
+      renderPicks(); buildCal(); AP.maskPhone(document.getElementById('inp-phone'));
+      updateUI();
+    }
+
+    /* ─ PROGRESS + UI ─ */
+    function updateUI() {
+      document.querySelectorAll('.step-panel').forEach(el => el.classList.remove('active'));
+      const panel = document.getElementById(`sp${state.step}`);
+      if (panel) panel.classList.add('active');
+
+      for (let i = 1; i <= 4; i++) {
+        const ps = document.getElementById(`ps${i}`);
+        const pd = document.getElementById(`pd${i}`);
+        ps.classList.remove('active','done');
+        if (i < state.step)  { ps.classList.add('done');   pd.textContent = '✓'; }
+        if (i === state.step){ ps.classList.add('active');  pd.textContent = i;   }
+        if (i > state.step)  { pd.textContent = i; }
+      }
+
+      const footer = document.getElementById('stepFooter');
+      footer.style.display = state.step === 5 ? 'none' : 'flex';
+      document.getElementById('btnBack').style.visibility = state.step > 1 ? 'visible' : 'hidden';
+      document.getElementById('btnNext').textContent = state.step === 4 ? '✓ Confirmar' : 'Continuar →';
+      document.getElementById('stepInd').textContent = `${Math.min(state.step,4)} / 4`;
+      updateNextBtn();
+    }
+
+    function updateNextBtn() {
+      const d = document.getElementById('btnNext');
+      if (state.step === 1) d.disabled = !state.service;
+      else if (state.step === 2) d.disabled = !state.date || !state.time;
+      else d.disabled = false;
+    }
+
+    function nextStep() {
+      if (state.step === 3) {
+        const n = document.getElementById('inp-name').value.trim();
+        const p = document.getElementById('inp-phone').value.trim();
+        const e = document.getElementById('inp-email').value.trim();
+        if (!n || !p || !e) { AP.toast('Preencha todos os campos obrigatórios (*)','error'); return; }
+        if (!e.includes('@')) { AP.toast('E-mail inválido','error'); return; }
+        populateConfirm();
+      }
+      if (state.step === 4) {
+        if (!document.getElementById('terms').checked) { AP.toast('Aceite os termos para continuar','error'); return; }
+        confirmBooking(); return;
+      }
+      state.step++; updateUI();
+    }
+
+    function prevStep() {
+      if (state.step > 1) { state.step--; updateUI(); }
+    }
+
+    /* ─ STEP 1 ─ */
+    function renderPicks() {
+      document.getElementById('pickList').innerHTML = AP.services.map(s => `
+        <div class="pick-item ${state.service?.id===s.id?'selected':''}" onclick="selectSvc(${s.id})">
+          <div class="pick-icon">${s.icon}</div>
+          <div class="pick-info">
+            <div class="pick-name">${s.name}</div>
+            <div class="pick-dur">⏱ ${s.dur}</div>
+          </div>
+          <div class="pick-right">
+            <div class="pick-price">${AP.formatPrice(s.price)}</div>
+            <div class="pick-check">✓</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectSvc(id) {
+      state.service = AP.services.find(s => s.id === id);
+      renderPicks(); updateNextBtn();
+    }
+
+    /* ─ STEP 2: CALENDAR ─ */
+    function buildCal() {
+      AP.days.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'cal-dh'; el.textContent = d;
+        document.getElementById('calGrid').before(el);
+      });
+      // insert day names before the grid
+      const grid = document.getElementById('calGrid');
+      const hdr  = document.createElement('div');
+      hdr.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px';
+      AP.days.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'cal-dh'; el.textContent = d;
+        hdr.appendChild(el);
+      });
+      grid.parentNode.insertBefore(hdr, grid);
+
+      document.getElementById('calPrev').onclick = () => {
+        const now = new Date();
+        if (calY === now.getFullYear() && calM === now.getMonth()) return;
+        calM--; if (calM < 0) { calM = 11; calY--; }
+        renderCal();
+      };
+      document.getElementById('calNext').onclick = () => {
+        calM++; if (calM > 11) { calM = 0; calY++; }
+        renderCal();
+      };
+      renderCal();
+    }
+
+    function renderCal() {
+      document.getElementById('calMonth').textContent = `${AP.months[calM]} ${calY}`;
+      const now = new Date(); now.setHours(0,0,0,0);
+      const firstDay = new Date(calY, calM, 1).getDay();
+      const daysInMo = new Date(calY, calM+1, 0).getDate();
+      let html = '';
+      for (let i = 0; i < firstDay; i++) html += `<div class="cal-cell empty"></div>`;
+      for (let d = 1; d <= daysInMo; d++) {
+        const date = new Date(calY, calM, d);
+        const past = date < now;
+        const sun  = date.getDay() === 0;
+        const tod  = AP.sameDay(date, new Date());
+        const sel  = state.date && AP.sameDay(date, state.date);
+        let cls = 'cal-cell';
+        if (past || sun) cls += ' disabled';
+        if (tod) cls += ' today';
+        if (sel) cls += ' selected';
+        html += `<div class="${cls}" onclick="selDate(${calY},${calM},${d})">${d}</div>`;
+      }
+      document.getElementById('calGrid').innerHTML = html;
+    }
+
+    function selDate(y, m, d) {
+      const date = new Date(y, m, d);
+      const now  = new Date(); now.setHours(0,0,0,0);
+      if (date < now || date.getDay() === 0) return;
+      state.date = date; state.time = null;
+      renderCal(); renderSlots(); updateNextBtn();
+    }
+
+    function renderSlots() {
+      if (!state.date) return;
+      let html = '';
+      AP.timeGroups.forEach(g => {
+        html += `<div class="slots-group-lbl">${g.label}</div><div class="slots-row">`;
+        g.times.forEach(t => {
+          const una = AP.unavailableSlots.includes(t);
+          const sel = state.time === t;
+          html += `<div class="slot${una?' unavailable':''}${sel?' selected':''}" onclick="selTime('${t}')">${t}</div>`;
+        });
+        html += '</div>';
+      });
+      document.getElementById('slotsSection').innerHTML = html;
+    }
+
+    function selTime(t) {
+      state.time = t; renderSlots(); updateNextBtn();
+    }
+
+    /* ─ STEP 4 ─ */
+    function populateConfirm() {
+      document.getElementById('c-svc').textContent   = `${state.service.icon} ${state.service.name}`;
+      document.getElementById('c-date').textContent  = AP.formatDate(state.date);
+      document.getElementById('c-time').textContent  = state.time;
+      document.getElementById('c-dur').textContent   = state.service.dur;
+      document.getElementById('c-price').textContent = AP.formatPrice(state.service.price);
+      document.getElementById('c-name').textContent  = document.getElementById('inp-name').value;
+      document.getElementById('c-phone').textContent = document.getElementById('inp-phone').value;
+      document.getElementById('c-email').textContent = document.getElementById('inp-email').value;
+    }
+
+    /* ─ CONFIRM ─ */
+    function confirmBooking() {
+      const ref = AP.genRef();
+      document.getElementById('successRef').textContent = ref;
+      document.getElementById('successDetails').innerHTML = `
+        <span>📅 <strong>${AP.formatDate(state.date)}</strong> às <strong>${state.time}</strong></span>
+        <span>${state.service.icon} <strong>${state.service.name}</strong> · ${state.service.dur}</span>
+        <span>💰 <strong>${AP.formatPrice(state.service.price)}</strong></span>
+        <span>📱 Lembrete enviado para <strong>${document.getElementById('inp-phone').value}</strong></span>
+      `;
+      state.step = 5; updateUI();
+      AP.toast('Agendamento confirmado! 🎉', 'success');
+    }
+
+    function resetWizard() {
+      state = { step:1, service:null, date:null, time:null };
+      ['inp-name','inp-phone','inp-email','inp-notes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('inp-how').value = '';
+      document.getElementById('terms').checked = false;
+      const now = new Date(); calY = now.getFullYear(); calM = now.getMonth();
+      renderPicks(); renderCal();
+      document.getElementById('slotsSection').innerHTML = '<div class="slots-placeholder">Selecione uma data acima 👆</div>';
+      updateUI();
+    }
+
+    init();
+  </script>
+</body>
+</html>
