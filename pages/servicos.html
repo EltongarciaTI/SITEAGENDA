@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#08080e" />
+  <title>Serviços — Agenda Pro</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    /* ── PAGE HERO ── */
+    .page-hero {
+      padding: 36px 20px 28px; text-align: center;
+    }
+    .page-hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 8vw, 44px); font-weight: 800; line-height: 1.1;
+      margin-bottom: 10px;
+      background: linear-gradient(155deg, #fff 35%, #a78bfa);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-hero p { color: var(--text2); font-size: 15px; line-height: 1.6; }
+
+    /* ── FILTER CHIPS ── */
+    .filter-scroll {
+      display: flex; gap: 8px; overflow-x: auto;
+      padding: 0 20px 4px; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .filter-scroll::-webkit-scrollbar { display: none; }
+    .chip {
+      flex-shrink: 0;
+      background: var(--surface2); border: 1.5px solid var(--border);
+      color: var(--text2); border-radius: 100px; padding: 8px 18px;
+      font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+      transition: all var(--transition); -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── SERVICE LIST ── */
+    .svc-list { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; }
+
+    .svc-item {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 18px 16px;
+      display: flex; align-items: center; gap: 14px;
+      text-decoration: none; color: inherit;
+      transition: border-color var(--transition), transform var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .svc-item:active { transform: scale(0.98); border-color: var(--accent2); }
+    .svc-item-icon {
+      width: 52px; height: 52px; border-radius: var(--radius-sm); flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(124,110,247,0.15), rgba(167,139,250,0.08));
+      border: 1px solid rgba(124,110,247,0.2);
+      display: flex; align-items: center; justify-content: center; font-size: 26px;
+    }
+    .svc-item-info { flex: 1; min-width: 0; }
+    .svc-item-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .svc-item-desc { font-size: 12px; color: var(--text2); line-height: 1.4; margin-bottom: 6px;
+      display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .svc-item-meta { display: flex; align-items: center; gap: 10px; }
+    .svc-item-dur   { font-size: 12px; color: var(--muted); }
+    .svc-item-price { font-size: 16px; font-weight: 800; color: var(--accent2); }
+    .svc-item-arrow { color: var(--muted); font-size: 18px; flex-shrink: 0; }
+
+    /* ── COUNT ── */
+    .svc-count { padding: 0 20px; color: var(--muted); font-size: 13px; }
+
+    /* ── EMPTY ── */
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* ── HIGHLIGHT BANNER ── */
+    .highlight {
+      margin: 0 20px 16px;
+      background: linear-gradient(135deg, rgba(124,110,247,0.14), rgba(167,139,250,0.06));
+      border: 1px solid rgba(124,110,247,0.28); border-radius: var(--radius);
+      padding: 20px;
+    }
+    .highlight h3 { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+    .highlight p  { font-size: 13px; color: var(--text2); line-height: 1.5; margin-bottom: 14px; }
+
+    /* ── FAQ ── */
+    .faq-wrap { padding: 0 20px 32px; }
+    .faq-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 800; margin-bottom: 14px; background: linear-gradient(145deg, #fff 40%, #a78bfa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .faq-item  { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+    .faq-q     { padding: 18px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; font-size: 15px; font-weight: 600; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    .faq-icon  { color: var(--accent2); font-size: 22px; flex-shrink: 0; transition: transform var(--transition); }
+    .faq-a     { max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.25s; font-size: 14px; color: var(--text2); line-height: 1.65; padding: 0 16px; }
+    .faq-item.open .faq-a  { max-height: 200px; padding: 0 16px 18px; }
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+
+    /* ── DESKTOP ── */
+    @media (min-width: 768px) {
+      .page-hero { padding: 56px 48px 36px; }
+      .filter-scroll { padding: 0 48px 8px; }
+      .svc-list { padding: 16px 48px; display: grid; grid-template-columns: 1fr 1fr; }
+      .svc-count { padding: 0 48px; }
+      .highlight { margin: 0 48px 20px; padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+      .highlight p { margin-bottom: 0; }
+      .faq-wrap { padding: 0 48px 48px; max-width: 700px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blobs"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <a href="../index.html" class="topbar-logo">Agenda Pro</a>
+    <nav class="topbar-nav-links">
+      <a href="../index.html">Início</a>
+      <a href="servicos.html" class="active">Serviços</a>
+      <a href="agendar.html">Agendar</a>
+      <a href="contato.html">Contato</a>
+    </nav>
+    <a href="agendar.html" class="topbar-action">Agendar →</a>
+  </header>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <a href="../index.html" class="bn-item">
+      <span class="bn-icon">🏠</span><span>Início</span>
+    </a>
+    <a href="servicos.html" class="bn-item active">
+      <span class="bn-icon">✨</span><span>Serviços</span>
+    </a>
+    <a href="agendar.html" class="bn-item center-btn">
+      <div class="bn-icon-wrap">📅</div><span>Agendar</span>
+    </a>
+    <a href="contato.html" class="bn-item">
+      <span class="bn-icon">💬</span><span>Contato</span>
+    </a>
+  </nav>
+
+  <div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="page-hero">
+      <div class="badge" style="margin-bottom:14px"><div class="badge-dot"></div>12 serviços disponíveis</div>
+      <h1>Nossos Serviços</h1>
+      <p>Tratamentos exclusivos com qualidade premium e atendimento personalizado.</p>
+    </div>
+
+    <!-- HIGHLIGHT -->
+    <div class="highlight">
+      <div>
+        <h3>💎 Pacote Premium — Dia Completo</h3>
+        <p>Massagem + limpeza de pele + manicure + corte. A melhor experiência de beleza.</p>
+      </div>
+      <a href="agendar.html?service=11" class="btn btn-primary btn-full" style="flex-shrink:0;white-space:nowrap">Reservar — R$ 380</a>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-scroll" id="filterBar"></div>
+
+    <!-- COUNT -->
+    <p class="svc-count" id="svcCount" style="margin:12px 0 0"></p>
+
+    <!-- LIST -->
+    <div class="svc-list" id="svcList"></div>
+
+    <!-- FAQ -->
+    <div class="faq-wrap">
+      <div class="section-label">Dúvidas</div>
+      <div class="faq-title">Perguntas Frequentes</div>
+      <div class="faq-item"><div class="faq-q"><span>Como funciona o cancelamento?</span><span class="faq-icon">+</span></div><div class="faq-a">Você pode cancelar com até 2 horas de antecedência sem custo. Após esse prazo, há taxa de 50%.</div></div>
+      <div class="faq-item"><div class="faq-q"><span>Preciso pagar antecipadamente?</span><span class="faq-icon">+</span></div><div class="faq-a">Não é obrigatório. Você pode pagar via PIX ou cartão ao agendar, ou presencialmente no dia.</div></div>
+      <div class="faq-item"><div class="faq-q"><span>Os profissionais são qualificados?</span><span class="faq-icon">+</span></div><div class="faq-a">Sim! Todos possuem certificação e passam por treinamento contínuo rigoroso.</div></div>
+      <div class="faq-item"><div class="faq-q"><span>Posso agendar para outra pessoa?</span><span class="faq-icon">+</span></div><div class="faq-a">Claro! Basta informar os dados de quem vai comparecer. Ótima opção para presentear alguém.</div></div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-logo">Agenda Pro</div>
+      <div class="footer-links-row">
+        <a href="../index.html">Início</a>
+        <a href="servicos.html">Serviços</a>
+        <a href="agendar.html">Agendar</a>
+        <a href="contato.html">Contato</a>
+      </div>
+      <div class="footer-copy">© 2026 Agenda Pro · Feito com ♥</div>
+    </footer>
+
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script>
+    let activeCategory = 'todos';
+    const catLabels = { 'bem-estar':'Bem-estar','cabelo':'Cabelo','unhas':'Unhas','estética':'Estética','pacotes':'Pacotes' };
+
+    // Build filter chips
+    AP.categories.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'chip' + (c.id === 'todos' ? ' active' : '');
+      btn.textContent = c.label;
+      btn.onclick = () => {
+        activeCategory = c.id;
+        document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderList();
+      };
+      document.getElementById('filterBar').appendChild(btn);
+    });
+
+    function renderList() {
+      const filtered = activeCategory === 'todos' ? AP.services : AP.services.filter(s => s.category === activeCategory);
+      document.getElementById('svcCount').textContent = `${filtered.length} serviço${filtered.length !== 1 ? 's' : ''} encontrado${filtered.length !== 1 ? 's' : ''}`;
+      document.getElementById('svcList').innerHTML = filtered.length ? filtered.map(s => `
+        <a href="agendar.html?service=${s.id}" class="svc-item">
+          <div class="svc-item-icon">${s.icon}</div>
+          <div class="svc-item-info">
+            <div class="svc-item-name">${s.name}</div>
+            <div class="svc-item-desc">${s.desc}</div>
+            <div class="svc-item-meta">
+              <span class="svc-item-dur">⏱ ${s.dur}</span>
+              <span class="svc-item-price">${AP.formatPrice(s.price)}</span>
+            </div>
+          </div>
+          <span class="svc-item-arrow">›</span>
+        </a>
+      `).join('') : `<div class="empty-state"><div class="icon">🔍</div><p>Nenhum serviço nesta categoria</p></div>`;
+    }
+
+    renderList();
+
+    // FAQ
+    document.querySelectorAll('.faq-item').forEach(item => {
+      item.querySelector('.faq-q').addEventListener('click', () => {
+        const open = item.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        if (!open) item.classList.add('open');
+      });
+    });
+  </script>
+</body>
+</html>
